@@ -252,6 +252,22 @@
   footer{border-top:1px solid var(--line);padding:30px 0;font-size:13px;color:var(--muted)}
   footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
+  /* 右侧翻页导航（圆点直达 + 上下翻页） */
+  .rail{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:40;
+    display:flex;flex-direction:column;align-items:center;gap:11px}
+  .sdot{width:9px;height:9px;border-radius:50%;background:transparent;border:1px solid var(--muted);
+    cursor:pointer;padding:0;position:relative;transition:.2s}
+  .sdot:hover{border-color:var(--acc)}
+  .sdot.on{background:var(--acc);border-color:var(--acc)}
+  .sdot::after{content:attr(data-tip);position:absolute;right:17px;top:50%;transform:translateY(-50%);
+    background:var(--bg2);border:1px solid var(--line);color:var(--text);font-size:12px;font-family:inherit;
+    padding:3px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:.15s}
+  .sdot:hover::after{opacity:1}
+  .flip{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:rgba(21,21,28,.85);
+    color:var(--text);font-size:13px;cursor:pointer;line-height:1;transition:.2s}
+  .flip:hover{border-color:var(--acc);color:var(--acc)}
+  @media (max-width:880px){.rail{display:none}}
+
   /* 回到顶部 */
   #top{position:fixed;right:26px;bottom:26px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
     background:rgba(21,21,28,.9);color:var(--text);font-size:18px;cursor:pointer;opacity:0;pointer-events:none;
@@ -716,12 +732,67 @@
   },{threshold:.18});
   document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 
-  // 当前分区导航高亮
+  // ===== 分页系统：统一跳转 / 圆点导航 / 键盘翻页 =====
   const secs=[...document.querySelectorAll('section[id]')];
+  const NAV_OFF=84;
+  let curIdx=0;
+
+  // 统一跳转：优先 scrollIntoView（走 scroll-margin 精确落点），400ms 无位移则回退 scrollTo
+  function jumpTo(el){
+    const y0=scrollY;
+    try{el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}catch(_){el.scrollIntoView()}
+    // 兜底：800ms 后仍完全未动且远离目标才补 scrollTo，避免打断进行中的平滑滚动
+    setTimeout(()=>{
+      const y=Math.max(0,el.getBoundingClientRect().top+scrollY-NAV_OFF);
+      if(Math.abs(scrollY-y0)<2&&Math.abs(scrollY-y)>4)scrollTo(0,y);
+    },800);
+  }
+
+  // 所有页内锚点（导航栏 / Hero 按钮 / 下滑提示）统一走 jumpTo
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#"]');
+    if(!a)return;
+    const el=document.getElementById(a.getAttribute('href').slice(1));
+    if(!el)return;
+    e.preventDefault();
+    jumpTo(el);
+    history.replaceState(null,'','#'+el.id);
+  });
+
+  // 右侧圆点导航 + 上下翻页
+  const TIP={hero:'首页',pain:'痛点',compare:'现状对比',product:'方案',capabilities:'五大能力',
+    privacy:'隐私安全',quality:'工程品质',specs:'规格',journey:'旅程',roadmap:'路线图',cta:'结语'};
+  const rail=document.createElement('div');
+  rail.className='rail';
+  rail.innerHTML='<button class="flip" id="prevSec" type="button" aria-label="上一页">↑</button>'
+    +secs.map((sec,i)=>`<button class="sdot" type="button" data-i="${i}" data-tip="${TIP[sec.id]||sec.id}" aria-label="${TIP[sec.id]||sec.id}"></button>`).join('')
+    +'<button class="flip" id="nextSec" type="button" aria-label="下一页">↓</button>';
+  document.body.appendChild(rail);
+  const dots=[...rail.querySelectorAll('.sdot')];
+  function setCur(i){
+    curIdx=Math.max(0,Math.min(secs.length-1,i));
+    dots.forEach((d,j)=>d.classList.toggle('on',j===curIdx));
+  }
+  rail.addEventListener('click',e=>{
+    const d=e.target.closest('.sdot');
+    if(d){setCur(+d.dataset.i);jumpTo(secs[curIdx]);history.replaceState(null,'','#'+secs[curIdx].id);return}
+    if(e.target.id==='prevSec'){setCur(curIdx-1);jumpTo(secs[curIdx]);history.replaceState(null,'','#'+secs[curIdx].id)}
+    if(e.target.id==='nextSec'){setCur(curIdx+1);jumpTo(secs[curIdx]);history.replaceState(null,'','#'+secs[curIdx].id)}
+  });
+
+  // 键盘翻页：PageUp / PageDown
+  addEventListener('keydown',e=>{
+    if(e.key==='PageDown'){e.preventDefault();setCur(curIdx+1);jumpTo(secs[curIdx])}
+    else if(e.key==='PageUp'){e.preventDefault();setCur(curIdx-1);jumpTo(secs[curIdx])}
+  });
+
+  // 当前分区高亮（导航栏 + 圆点）
   const linkOf=id=>document.querySelector('.links a[href="#'+id+'"]');
   const io2=new IntersectionObserver(entries=>{
     for(const en of entries){
       if(!en.isIntersecting)continue;
+      const i=secs.indexOf(en.target);
+      if(i>-1)setCur(i);
       document.querySelectorAll('.links a').forEach(a=>a.classList.remove('on'));
       const a=linkOf(en.target.id);if(a)a.classList.add('on');
     }

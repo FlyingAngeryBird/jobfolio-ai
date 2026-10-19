@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>求职札记 — 本地优先的 BOSS 直聘求职助手</title>
 <meta name="description" content="求职札记：装在浏览器侧边栏的求职工作台。AI 匹配分析、个性化开场白、投递台账与 Excel 导出；简历与数据只存在你的浏览器里，支持自带 API Key（BYOK）。">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICA8cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNjIiIGhlaWdodD0iNjIiIHJ4PSIxNiIgZmlsbD0iI0ZGNjkwMCIvPgogICAgPHBhdGggZD0iTTIwIDE0aDE4bDEwIDEwdjI0YTQgNCAwIDAgMS00IDRIMjBhNCA0IDAgMCAxLTQtNFYxOGE0IDQgMCAwIDEgNC00WiIgZmlsbD0iI0ZGRjlGNSIvPgogICAgPHBhdGggZD0iTTM4IDE0djhhMiAyIDAgMCAwIDIgMmg4WiIgZmlsbD0iI0ZGRDBBRSIvPgogICAgPHBhdGggZD0iTTM4IDE0djhhMiAyIDAgMCAwIDIgMmg4IiBmaWxsPSJub25lIiBzdHJva2U9IiNFNTVFMDAiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgICA8cGF0aCBkPSJNMjIgMjV2MTkiIHN0cm9rZT0iI0ZGNjkwMCIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgPHBhdGggZD0ibTI3IDM2IDUgNSAxMC0xMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTcxNzFFIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDwvc3ZnPg==">
 <style>
   :root{
     --bg:#0A0A0E; --bg2:#15151C; --bg3:#1C1C25; --text:#FFFFFF; --muted:#9A9AA6;
@@ -42,7 +43,10 @@
   nav.solid{background:rgba(10,10,14,.82);backdrop-filter:blur(14px);border-color:var(--line)}
   .navin{max-width:1120px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;gap:28px}
   .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:.06em;color:var(--text);text-decoration:none}
-  .logo i{width:14px;height:14px;background:var(--acc)}
+  .brand-icon{display:block;flex:none;width:32px;height:32px}
+  .brand-sprite{position:absolute;width:0;height:0;overflow:hidden}
+  #hero h1{display:flex;align-items:center;gap:18px}
+  .hero-icon{width:.78em;height:.78em}
   .links{display:flex;gap:26px;margin-left:auto}
   .links a{color:var(--muted);text-decoration:none;font-size:15px;transition:color .2s;position:relative;padding:4px 0}
   .links a:hover,.links a.on{color:var(--text)}
@@ -59,6 +63,7 @@
   .herog{display:grid;grid-template-columns:1.35fr .65fr;gap:56px;align-items:center}
   .pre{font-size:14px;letter-spacing:.3em;color:var(--muted)}
   #hero h1{font-size:clamp(54px,8vw,104px);font-weight:800;letter-spacing:.06em;margin:18px 0 6px}
+  @media (max-width:520px){#hero h1{font-size:clamp(42px,12vw,54px);gap:10px}.hero-icon{width:.75em;height:.75em}}
   .en{font-size:13px;letter-spacing:.55em;color:var(--muted)}
   .tag{font-size:clamp(22px,3vw,34px);font-weight:800;margin-top:34px}
   .tag b{color:var(--acc)}
@@ -248,7 +253,6 @@
   #cta .m1{font-size:clamp(32px,5.6vw,60px);font-weight:800}
   #cta .m2{font-size:clamp(32px,5.6vw,60px);font-weight:800;color:var(--acc);margin-top:6px}
   #cta .v{font-size:14.5px;color:var(--muted);margin-top:36px}
-  #cta .th{font-size:19px;margin-top:40px}
   footer{border-top:1px solid var(--line);padding:30px 0;font-size:13px;color:var(--muted)}
   footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
@@ -278,9 +282,20 @@
 </head>
 <body>
 
+<svg class="brand-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <symbol id="folio-mark" viewBox="0 0 64 64">
+    <rect x="1" y="1" width="62" height="62" rx="16" fill="#FF6900"/>
+    <path d="M20 14h18l10 10v24a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4Z" fill="#FFF9F5"/>
+    <path d="M38 14v8a2 2 0 0 0 2 2h8Z" fill="#FFD0AE"/>
+    <path d="M38 14v8a2 2 0 0 0 2 2h8" fill="none" stroke="#E55E00" stroke-width="1.5"/>
+    <path d="M22 25v19" stroke="#FF6900" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="m27 36 5 5 10-12" fill="none" stroke="#17171E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
 <nav id="nav">
   <div class="navin">
-    <a class="logo" href="#hero"><i></i>求职札记</a>
+    <a class="logo" href="#hero"><svg class="brand-icon" aria-hidden="true" focusable="false"><use href="#folio-mark"/></svg>求职札记</a>
     <div class="links">
       <a href="#pain">痛点</a>
       <a href="#product">方案</a>
@@ -298,7 +313,7 @@
   <div class="wrap herog">
     <div>
       <div class="pre">本地优先的 BOSS 直聘求职助手 · v0.1.0</div>
-      <h1>求职札记</h1>
+      <h1><svg class="brand-icon hero-icon" aria-hidden="true" focusable="false"><use href="#folio-mark"/></svg><span>求职札记</span></h1>
       <div class="en">JOB APPLICATION FOLIO</div>
       <div class="tag">把重复交给工具，<b>把判断留给你。</b></div>
       <div class="sub">AI 岗位匹配分析 · 个性化开场白 · 投递台账与 Excel 导出</div>
@@ -660,7 +675,6 @@
     <div class="m1 rv">把重复交给工具，</div>
     <div class="m2 rv">把判断留给你。</div>
     <div class="v rv">求职札记 · JOB APPLICATION FOLIO · v0.1.0<br>本地优先 · BYOK · 数据不出浏览器</div>
-    <div class="th rv">谢谢观看 · 欢迎反馈</div>
   </div>
 </section>
 
